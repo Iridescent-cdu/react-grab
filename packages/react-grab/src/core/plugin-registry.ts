@@ -46,6 +46,7 @@ interface PluginStoreState {
   theme: Required<Theme>;
   options: OptionsState;
   actions: ContextMenuAction[];
+  toolbarActions: import("../types.js").ToolbarAction[];
 }
 
 type HookName = keyof PluginHooks;
@@ -58,12 +59,14 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
     theme: DEFAULT_THEME,
     options: { ...DEFAULT_OPTIONS, ...initialOptions },
     actions: [],
+    toolbarActions: [],
   });
 
   const recomputeStore = () => {
     let mergedTheme: Required<Theme> = DEFAULT_THEME;
     let mergedOptions: OptionsState = { ...DEFAULT_OPTIONS, ...initialOptions };
     const allActions: ContextMenuAction[] = [];
+    const allToolbarActions: import("../types.js").ToolbarAction[] = [];
 
     for (const { config } of plugins.values()) {
       if (config.theme) {
@@ -77,6 +80,10 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
       if (config.actions) {
         allActions.push(...config.actions);
       }
+
+      if (config.toolbarActions) {
+        allToolbarActions.push(...config.toolbarActions);
+      }
     }
 
     mergedOptions = { ...mergedOptions, ...directOptionOverrides };
@@ -84,6 +91,7 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
     setStore("theme", mergedTheme);
     setStore("options", mergedOptions);
     setStore("actions", allActions);
+    setStore("toolbarActions", allToolbarActions);
   };
 
   const setOptions = (optionUpdates: SettableOptions) => {
@@ -122,6 +130,10 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
         ...plugin.actions,
         ...(config.actions ?? []),
       ];
+    }
+
+    if (plugin.toolbarActions) {
+      config.toolbarActions = [...plugin.toolbarActions, ...(config.toolbarActions ?? [])];
     }
 
     if (plugin.hooks) {

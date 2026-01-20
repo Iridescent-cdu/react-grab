@@ -2415,6 +2415,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
             contextMenuComponentName={contextMenuComponentName()}
             contextMenuHasFilePath={Boolean(contextMenuFilePath()?.filePath)}
             actions={pluginRegistry.store.actions}
+            toolbarActions={pluginRegistry.store.toolbarActions}
             actionContext={contextMenuActionContext()}
             onContextMenuCopy={handleContextMenuCopy}
             onContextMenuCopyScreenshot={() =>

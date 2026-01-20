@@ -65,7 +65,7 @@ export const ReactGrabRenderer: Component<ReactGrabRendererProps> = (props) => {
                   session().isStreaming
                     ? undefined
                     : (prompt) =>
-                        props.onFollowUpSubmitSession?.(session().id, prompt)
+                      props.onFollowUpSubmitSession?.(session().id, prompt)
                 }
                 error={session().error}
                 onAcknowledgeError={() =>
@@ -138,10 +138,10 @@ export const ReactGrabRenderer: Component<ReactGrabRendererProps> = (props) => {
             onShowContextMenu={
               (instance().status === "copied" ||
                 instance().status === "fading") &&
-              instance().element &&
-              (document.body ?? document.documentElement).contains(
-                instance().element as Node,
-              )
+                instance().element &&
+                (document.body ?? document.documentElement).contains(
+                  instance().element as Node,
+                )
                 ? () => props.onShowContextMenuInstance?.(instance().id)
                 : undefined
             }
@@ -150,7 +150,7 @@ export const ReactGrabRenderer: Component<ReactGrabRendererProps> = (props) => {
       </Index>
 
       <Show when={props.toolbarVisible !== false}>
-        <Toolbar isActive={props.isActive} onToggle={props.onToggleActive} />
+        <Toolbar isActive={props.isActive} onToggle={props.onToggleActive} toolbarActions={props.toolbarActions} />
       </Show>
 
       <ContextMenu
@@ -161,11 +161,11 @@ export const ReactGrabRenderer: Component<ReactGrabRendererProps> = (props) => {
         hasFilePath={props.contextMenuHasFilePath ?? false}
         actions={props.actions}
         actionContext={props.actionContext}
-        onCopy={props.onContextMenuCopy ?? (() => {})}
-        onCopyScreenshot={props.onContextMenuCopyScreenshot ?? (() => {})}
-        onOpen={props.onContextMenuOpen ?? (() => {})}
-        onDismiss={props.onContextMenuDismiss ?? (() => {})}
-        onHide={props.onContextMenuHide ?? (() => {})}
+        onCopy={props.onContextMenuCopy ?? (() => { })}
+        onCopyScreenshot={props.onContextMenuCopyScreenshot ?? (() => { })}
+        onOpen={props.onContextMenuOpen ?? (() => { })}
+        onDismiss={props.onContextMenuDismiss ?? (() => { })}
+        onHide={props.onContextMenuHide ?? (() => { })}
       />
     </>
   );

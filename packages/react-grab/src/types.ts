@@ -223,6 +223,15 @@ export interface ContextMenuAction {
   agent?: AgentOptions;
 }
 
+/**
+ * Action button for the Toolbar (the floating panel at the bottom/side of screen)
+ */
+export interface ToolbarAction {
+  id: string;
+  label: string;
+  onClick: () => void;
+}
+
 export interface PluginHooks {
   onActivate?: () => void;
   onDeactivate?: () => void;
@@ -263,6 +272,7 @@ export interface PluginConfig {
   theme?: DeepPartial<Theme>;
   options?: SettableOptions;
   actions?: ContextMenuAction[];
+  toolbarActions?: ToolbarAction[];
   hooks?: PluginHooks;
   cleanup?: () => void;
 }
@@ -272,6 +282,7 @@ export interface Plugin {
   theme?: DeepPartial<Theme>;
   options?: SettableOptions;
   actions?: ContextMenuAction[];
+  toolbarActions?: ToolbarAction[];
   hooks?: PluginHooks;
   setup?: (api: ReactGrabAPI) => PluginConfig | void;
 }
@@ -400,6 +411,7 @@ export interface ReactGrabRendererProps {
   contextMenuComponentName?: string;
   contextMenuHasFilePath?: boolean;
   actions?: ContextMenuAction[];
+  toolbarActions?: ToolbarAction[];
   actionContext?: ActionContext;
   onContextMenuCopy?: () => void;
   onContextMenuCopyScreenshot?: () => void;

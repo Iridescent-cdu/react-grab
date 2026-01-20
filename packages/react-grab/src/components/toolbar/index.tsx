@@ -1,5 +1,6 @@
-import { createSignal, onMount, onCleanup } from "solid-js";
+import { createSignal, onMount, onCleanup, Show, For } from "solid-js";
 import type { Component } from "solid-js";
+import type { ToolbarAction } from "../../types.js";
 import { cn } from "../../utils/cn.js";
 import { loadToolbarState, saveToolbarState, type SnapEdge } from "./state.js";
 import { IconSelect } from "../icons/icon-select.jsx";
@@ -8,6 +9,7 @@ import { IconChevron } from "../icons/icon-chevron.jsx";
 interface ToolbarProps {
   isActive?: boolean;
   onToggle?: () => void;
+  toolbarActions?: ToolbarAction[];
 }
 
 const SNAP_MARGIN = 16;
@@ -247,7 +249,7 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
 
     const distanceMoved = Math.sqrt(
       Math.pow(event.clientX - pointerStartPosition.x, 2) +
-        Math.pow(event.clientY - pointerStartPosition.y, 2),
+      Math.pow(event.clientY - pointerStartPosition.y, 2),
     );
 
     if (distanceMoved > DRAG_THRESHOLD) {
@@ -458,11 +460,11 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
           isCollapsed() && snapEdge() === "left" && "rounded-l-none",
           isCollapsed() && snapEdge() === "right" && "rounded-r-none",
           isCollapsed() &&
-            (snapEdge() === "top" || snapEdge() === "bottom") &&
-            "px-2 py-0.25",
+          (snapEdge() === "top" || snapEdge() === "bottom") &&
+          "px-2 py-0.25",
           isCollapsed() &&
-            (snapEdge() === "left" || snapEdge() === "right") &&
-            "px-0.25 py-2",
+          (snapEdge() === "left" || snapEdge() === "right") &&
+          "px-0.25 py-2",
         )}
         onClick={(event) => {
           if (isCollapsed()) {
@@ -496,7 +498,32 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
               )}
             />
           </button>
-        </div>
+        </div >
+        <Show when={props.toolbarActions && props.toolbarActions.length > 0}>
+          <div
+            class={cn(
+              "flex items-center gap-1 transition-all duration-100 ease-out overflow-hidden",
+              isCollapsed() ? "max-w-0 opacity-0" : "max-w-[200px] opacity-100",
+            )}
+          >
+            <For each={props.toolbarActions}>
+              {(action) => (
+                <button
+                  data-react-grab-ignore-events
+                  class="contain-layout shrink-0 flex items-center justify-center px-2 py-1 rounded-sm bg-[#f5f5f5] hover:bg-[#e5e5e5] transition-colors cursor-pointer text-[11px] leading-3 font-medium text-black whitespace-nowrap"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    action.onClick();
+                  }}
+                >
+                  {action.label}
+                </button>
+              )}
+            </For>
+          </div>
+        </Show>
         <button
           data-react-grab-ignore-events
           data-react-grab-toolbar-collapse
@@ -510,7 +537,7 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
             )}
           />
         </button>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
