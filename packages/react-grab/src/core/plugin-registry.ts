@@ -136,10 +136,6 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
       config.toolbarActions = [...plugin.toolbarActions, ...(config.toolbarActions ?? [])];
     }
 
-    if (plugin.toolbarActions) {
-      config.toolbarActions = [...plugin.toolbarActions, ...(config.toolbarActions ?? [])];
-    }
-
     if (plugin.hooks) {
       config.hooks = config.hooks
         ? { ...plugin.hooks, ...config.hooks }
