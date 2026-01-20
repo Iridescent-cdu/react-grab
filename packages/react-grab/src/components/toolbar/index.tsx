@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, Show, For } from "solid-js";
+import { createSignal, onMount, onCleanup, Show, For, createEffect } from "solid-js";
 import type { Component } from "solid-js";
 import type { ToolbarAction } from "../../types.js";
 import { cn } from "../../utils/cn.js";
@@ -123,6 +123,17 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
     );
     setPosition(newPosition);
   };
+
+  // Recalculate position when toolbarActions change (e.g., after plugin registration)
+  createEffect(() => {
+    if (props.toolbarActions?.length) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          recalculatePosition();
+        });
+      });
+    }
+  });
 
   let didDragOccur = false;
 
