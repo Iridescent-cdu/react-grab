@@ -2664,6 +2664,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
             onToggleActive={handleToggleActive}
             enabled={isEnabled()}
             onToggleEnabled={handleToggleEnabled}
+            toolbarConfig={pluginRegistry.store.toolbarConfig}
             contextMenuPosition={contextMenuPosition()}
             contextMenuBounds={contextMenuBounds()}
             contextMenuTagName={contextMenuTagName()}

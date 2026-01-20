@@ -22,6 +22,9 @@ interface ToolbarProps {
   enabled?: boolean;
   onToggleEnabled?: () => void;
   toolbarActions?: ToolbarAction[];
+  toolbarConfig?: {
+    showToggle?: boolean;
+  };
 }
 
 export const Toolbar: Component<ToolbarProps> = (props) => {
@@ -270,7 +273,7 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
 
     const distanceMoved = Math.sqrt(
       Math.pow(event.clientX - pointerStartPosition.x, 2) +
-        Math.pow(event.clientY - pointerStartPosition.y, 2),
+      Math.pow(event.clientY - pointerStartPosition.y, 2),
     );
 
     if (distanceMoved > TOOLBAR_DRAG_THRESHOLD_PX) {
@@ -497,11 +500,11 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
             isCollapsed() && snapEdge() === "left" && "rounded-l-none",
             isCollapsed() && snapEdge() === "right" && "rounded-r-none",
             isCollapsed() &&
-              (snapEdge() === "top" || snapEdge() === "bottom") &&
-              "px-2 py-0.25",
+            (snapEdge() === "top" || snapEdge() === "bottom") &&
+            "px-2 py-0.25",
             isCollapsed() &&
-              (snapEdge() === "left" || snapEdge() === "right") &&
-              "px-0.25 py-2",
+            (snapEdge() === "left" || snapEdge() === "right") &&
+            "px-0.25 py-2",
           )}
           onClick={(event) => {
             if (isCollapsed()) {
@@ -536,26 +539,28 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
                 )}
               />
             </button>
-            <button
-              data-react-grab-ignore-events
-              data-react-grab-toolbar-enabled
-              class="contain-layout shrink-0 flex items-center justify-center cursor-pointer transition-all hover:scale-105 outline-none mx-0.5"
-              onClick={handleToggleEnabled}
-            >
-              <div
-                class={cn(
-                  "relative w-5 h-3 rounded-full transition-colors",
-                  props.enabled ? "bg-black" : "bg-black/25",
-                )}
+            <Show when={props.toolbarConfig?.showToggle !== false}>
+              <button
+                data-react-grab-ignore-events
+                data-react-grab-toolbar-enabled
+                class="contain-layout shrink-0 flex items-center justify-center cursor-pointer transition-all hover:scale-105 outline-none mx-0.5"
+                onClick={handleToggleEnabled}
               >
                 <div
                   class={cn(
-                    "absolute top-0.5 w-2 h-2 rounded-full bg-white transition-transform",
-                    props.enabled ? "left-2.5" : "left-0.5",
+                    "relative w-5 h-3 rounded-full transition-colors",
+                    props.enabled ? "bg-black" : "bg-black/25",
                   )}
-                />
-              </div>
-            </button>
+                >
+                  <div
+                    class={cn(
+                      "absolute top-0.5 w-2 h-2 rounded-full bg-white transition-transform",
+                      props.enabled ? "left-2.5" : "left-0.5",
+                    )}
+                  />
+                </div>
+              </button>
+            </Show>
           </div>
           <Show when={props.toolbarActions && props.toolbarActions.length > 0}>
             <div

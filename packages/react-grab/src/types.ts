@@ -271,6 +271,7 @@ export interface PluginConfig {
   options?: SettableOptions;
   actions?: ContextMenuAction[];
   toolbarActions?: ToolbarAction[];
+  showToggle?: boolean;
   hooks?: PluginHooks;
   cleanup?: () => void;
 }
@@ -281,6 +282,7 @@ export interface Plugin {
   options?: SettableOptions;
   actions?: ContextMenuAction[];
   toolbarActions?: ToolbarAction[];
+  showToggle?: boolean;
   hooks?: PluginHooks;
   setup?: (api: ReactGrabAPI) => PluginConfig | void;
 }
@@ -405,6 +407,9 @@ export interface ReactGrabRendererProps {
   onToggleActive?: () => void;
   enabled?: boolean;
   onToggleEnabled?: () => void;
+  toolbarConfig?: {
+    showToggle?: boolean;
+  };
   contextMenuPosition?: { x: number; y: number } | null;
   contextMenuBounds?: OverlayBounds | null;
   contextMenuTagName?: string;

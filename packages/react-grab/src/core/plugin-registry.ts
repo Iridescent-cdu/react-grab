@@ -47,6 +47,9 @@ interface PluginStoreState {
   options: OptionsState;
   actions: ContextMenuAction[];
   toolbarActions: import("../types.js").ToolbarAction[];
+  toolbarConfig: {
+    showToggle: boolean;
+  };
 }
 
 type HookName = keyof PluginHooks;
@@ -60,6 +63,9 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
     options: { ...DEFAULT_OPTIONS, ...initialOptions },
     actions: [],
     toolbarActions: [],
+    toolbarConfig: {
+      showToggle: true,
+    },
   });
 
   const recomputeStore = () => {
@@ -67,8 +73,9 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
     let mergedOptions: OptionsState = { ...DEFAULT_OPTIONS, ...initialOptions };
     const allActions: ContextMenuAction[] = [];
     const allToolbarActions: import("../types.js").ToolbarAction[] = [];
+    let showToggle = true;
 
-    for (const { config } of plugins.values()) {
+    for (const { config, plugin } of plugins.values()) {
       if (config.theme) {
         mergedTheme = deepMergeTheme(mergedTheme, config.theme);
       }
@@ -84,6 +91,10 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
       if (config.toolbarActions) {
         allToolbarActions.push(...config.toolbarActions);
       }
+
+      if (plugin.showToggle !== undefined || config.showToggle !== undefined) {
+        showToggle = config.showToggle ?? plugin.showToggle ?? showToggle;
+      }
     }
 
     mergedOptions = { ...mergedOptions, ...directOptionOverrides };
@@ -92,6 +103,7 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
     setStore("options", mergedOptions);
     setStore("actions", allActions);
     setStore("toolbarActions", allToolbarActions);
+    setStore("toolbarConfig", "showToggle", showToggle);
   };
 
   const setOptions = (optionUpdates: SettableOptions) => {
@@ -150,6 +162,10 @@ const createPluginRegistry = (initialOptions: SettableOptions = {}) => {
       config.options = config.options
         ? { ...plugin.options, ...config.options }
         : plugin.options;
+    }
+
+    if (plugin.showToggle !== undefined) {
+      config.showToggle = config.showToggle ?? plugin.showToggle;
     }
 
     plugins.set(plugin.name, { plugin, config });
