@@ -1,16 +1,10 @@
 import type { DragRect, Rect } from "../types.js";
-import {
-  enablePointerEventsOverride,
-  disablePointerEventsOverride,
-} from "./pointer-events-override.js";
-import {
-  DRAG_SELECTION_COVERAGE_THRESHOLD,
-  DRAG_SELECTION_SAMPLE_SPACING_PX,
-  DRAG_SELECTION_MIN_SAMPLES_PER_AXIS,
-  DRAG_SELECTION_MAX_SAMPLES_PER_AXIS,
-  DRAG_SELECTION_MAX_TOTAL_SAMPLE_POINTS,
-  DRAG_SELECTION_EDGE_INSET_PX,
-} from "../constants.js";
+
+const DRAG_COVERAGE_THRESHOLD = 0.75;
+const SAMPLE_SPACING_PX = 24;
+const MIN_SAMPLES_PER_AXIS = 3;
+const MAX_SAMPLES_PER_AXIS = 30;
+const MAX_TOTAL_SAMPLE_POINTS = 600;
 
 const calculateIntersectionArea = (rect1: Rect, rect2: Rect): number => {
   const intersectionLeft = Math.max(rect1.left, rect2.left);
@@ -67,29 +61,29 @@ const createSamplePoints = (dragRect: DragRect): SamplePoint[] => {
   const centerY = top + dragRect.height / 2;
 
   const xCount = clampNumber(
-    Math.ceil(dragRect.width / DRAG_SELECTION_SAMPLE_SPACING_PX),
-    DRAG_SELECTION_MIN_SAMPLES_PER_AXIS,
-    DRAG_SELECTION_MAX_SAMPLES_PER_AXIS,
+    Math.ceil(dragRect.width / SAMPLE_SPACING_PX),
+    MIN_SAMPLES_PER_AXIS,
+    MAX_SAMPLES_PER_AXIS,
   );
   const yCount = clampNumber(
-    Math.ceil(dragRect.height / DRAG_SELECTION_SAMPLE_SPACING_PX),
-    DRAG_SELECTION_MIN_SAMPLES_PER_AXIS,
-    DRAG_SELECTION_MAX_SAMPLES_PER_AXIS,
+    Math.ceil(dragRect.height / SAMPLE_SPACING_PX),
+    MIN_SAMPLES_PER_AXIS,
+    MAX_SAMPLES_PER_AXIS,
   );
   const totalGridPoints = xCount * yCount;
   const scale =
-    totalGridPoints > DRAG_SELECTION_MAX_TOTAL_SAMPLE_POINTS
-      ? Math.sqrt(DRAG_SELECTION_MAX_TOTAL_SAMPLE_POINTS / totalGridPoints)
+    totalGridPoints > MAX_TOTAL_SAMPLE_POINTS
+      ? Math.sqrt(MAX_TOTAL_SAMPLE_POINTS / totalGridPoints)
       : 1;
   const scaledXCount = clampNumber(
     Math.floor(xCount * scale),
-    DRAG_SELECTION_MIN_SAMPLES_PER_AXIS,
-    DRAG_SELECTION_MAX_SAMPLES_PER_AXIS,
+    MIN_SAMPLES_PER_AXIS,
+    MAX_SAMPLES_PER_AXIS,
   );
   const scaledYCount = clampNumber(
     Math.floor(yCount * scale),
-    DRAG_SELECTION_MIN_SAMPLES_PER_AXIS,
-    DRAG_SELECTION_MAX_SAMPLES_PER_AXIS,
+    MIN_SAMPLES_PER_AXIS,
+    MAX_SAMPLES_PER_AXIS,
   );
 
   const pointKeys = new Set<string>();
@@ -104,26 +98,15 @@ const createSamplePoints = (dragRect: DragRect): SamplePoint[] => {
     points.push({ x: clampedX, y: clampedY });
   };
 
-  addPoint(
-    left + DRAG_SELECTION_EDGE_INSET_PX,
-    top + DRAG_SELECTION_EDGE_INSET_PX,
-  );
-  addPoint(
-    right - DRAG_SELECTION_EDGE_INSET_PX,
-    top + DRAG_SELECTION_EDGE_INSET_PX,
-  );
-  addPoint(
-    left + DRAG_SELECTION_EDGE_INSET_PX,
-    bottom - DRAG_SELECTION_EDGE_INSET_PX,
-  );
-  addPoint(
-    right - DRAG_SELECTION_EDGE_INSET_PX,
-    bottom - DRAG_SELECTION_EDGE_INSET_PX,
-  );
-  addPoint(centerX, top + DRAG_SELECTION_EDGE_INSET_PX);
-  addPoint(centerX, bottom - DRAG_SELECTION_EDGE_INSET_PX);
-  addPoint(left + DRAG_SELECTION_EDGE_INSET_PX, centerY);
-  addPoint(right - DRAG_SELECTION_EDGE_INSET_PX, centerY);
+  const edgeInset = 1;
+  addPoint(left + edgeInset, top + edgeInset);
+  addPoint(right - edgeInset, top + edgeInset);
+  addPoint(left + edgeInset, bottom - edgeInset);
+  addPoint(right - edgeInset, bottom - edgeInset);
+  addPoint(centerX, top + edgeInset);
+  addPoint(centerX, bottom - edgeInset);
+  addPoint(left + edgeInset, centerY);
+  addPoint(right - edgeInset, centerY);
   addPoint(centerX, centerY);
 
   for (let xIndex = 0; xIndex < scaledXCount; xIndex += 1) {
@@ -152,16 +135,11 @@ const filterElementsInDrag = (
   const candidates = new Set<Element>();
   const samplePoints = createSamplePoints(dragRect);
 
-  enablePointerEventsOverride();
-  try {
-    for (const point of samplePoints) {
-      const elementsAtPoint = document.elementsFromPoint(point.x, point.y);
-      for (const candidateElement of elementsAtPoint) {
-        candidates.add(candidateElement);
-      }
+  for (const point of samplePoints) {
+    const elementsAtPoint = document.elementsFromPoint(point.x, point.y);
+    for (const candidateElement of elementsAtPoint) {
+      candidates.add(candidateElement);
     }
-  } finally {
-    disablePointerEventsOverride();
   }
 
   const matchingElements: Element[] = [];
@@ -192,7 +170,7 @@ const filterElementsInDrag = (
       const elementArea = elementRect.width * elementRect.height;
       const hasMajorityCoverage =
         elementArea > 0 &&
-        intersectionArea / elementArea >= DRAG_SELECTION_COVERAGE_THRESHOLD;
+        intersectionArea / elementArea >= DRAG_COVERAGE_THRESHOLD;
 
       if (hasMajorityCoverage) {
         matchingElements.push(candidateElement);

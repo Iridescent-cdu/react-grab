@@ -4,7 +4,6 @@ import type { ArrowPosition, SelectionLabelProps } from "../../types.js";
 import {
   VIEWPORT_MARGIN_PX,
   ARROW_HEIGHT_PX,
-  ARROW_MIN_OFFSET_PX,
   LABEL_GAP_PX,
   IDLE_TIMEOUT_MS,
 } from "../../constants.js";
@@ -52,11 +51,9 @@ export const SelectionLabel: Component<SelectionLabelProps> = (props) => {
 
   const shouldEnablePointerEvents = (): boolean =>
     props.isPromptMode ||
-    (isCompletedStatus() &&
-      Boolean(props.onDismiss || props.onShowContextMenu)) ||
+    (isCompletedStatus() && Boolean(props.onDismiss || props.onShowContextMenu)) ||
     (props.status === "copying" && Boolean(props.onAbort)) ||
-    (props.status === "error" &&
-      Boolean(props.onAcknowledgeError || props.onRetry));
+    (props.status === "error" && Boolean(props.onAcknowledgeError || props.onRetry));
 
   const showOpenIndicator = () => props.isContextMenuOpen === true;
 
@@ -222,8 +219,8 @@ export const SelectionLabel: Component<SelectionLabelProps> = (props) => {
     }
 
     const arrowLeft = Math.max(
-      ARROW_MIN_OFFSET_PX,
-      Math.min(cursorX - positionLeft, labelWidth - ARROW_MIN_OFFSET_PX),
+      12,
+      Math.min(cursorX - positionLeft, labelWidth - 12),
     );
 
     const position = { left: positionLeft, top: positionTop, arrowLeft };

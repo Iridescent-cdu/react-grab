@@ -164,7 +164,7 @@ Or add it manually to your `mcp.json` file:
   "mcpServers": {
     "react-grab-browser": {
       "command": "npx",
-      "args": ["-y", "grab", "browser", "mcp"]
+      "args": ["-y", "@react-grab/cli", "browser", "mcp"]
     }
   }
 }
@@ -179,7 +179,7 @@ Once configured, your agent has access to:
 
 ## Skill
 
-For agents that support skills (like Codex), install the `react-grab` skill:
+For agents that support skills (like Codex), install the `react-grab-browser` skill:
 
 ```bash
 npx -y grab@latest add skill

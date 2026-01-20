@@ -1,4 +1,1 @@
-export {
-  getSnapshotScript,
-  clearSnapshotScriptCache,
-} from "./browser-script.js";
+export { getSnapshotScript, clearSnapshotScriptCache } from "./browser-script.js";

@@ -1,8 +1,5 @@
 import type { PackageManager } from "./detect.js";
-import type {
-  PackageJsonTransformResult,
-  TransformResult,
-} from "./transform.js";
+import type { PackageJsonTransformResult, TransformResult } from "./transform.js";
 import { applyPackageJsonTransform, applyTransform } from "./transform.js";
 import { handleError } from "./handle-error.js";
 import { installPackages, uninstallPackages } from "./install.js";
@@ -16,38 +13,18 @@ export const detectSkillAgents = (cwd: string): SkillAgent[] => {
   return SKILL_AGENTS.filter((agent) => existsSync(join(cwd, agent.folder)));
 };
 
-export interface RankedSkillAgent extends SkillAgent {
-  detected: boolean;
-}
-
-export const getRankedSkillAgents = (cwd: string): RankedSkillAgent[] => {
-  const rankedAgents = SKILL_AGENTS.map((agent) => ({
-    ...agent,
-    detected: existsSync(join(cwd, agent.folder)),
-  }));
-  return rankedAgents.sort((first, second) => {
-    if (first.detected && !second.detected) return -1;
-    if (!first.detected && second.detected) return 1;
-    return 0;
-  });
-};
-
 export const findSkillAgent = (id: string): SkillAgent | undefined => {
   return SKILL_AGENTS.find((agent) => agent.id === id);
 };
 
 export const formatInstalledAgentNames = (agents: string[]): string =>
-  agents
-    .map((agent) => AGENT_NAMES[agent as keyof typeof AGENT_NAMES] ?? agent)
-    .join(", ");
+  agents.map((agent) => AGENT_NAMES[agent as keyof typeof AGENT_NAMES] ?? agent).join(", ");
 
 export const applyTransformWithFeedback = (
   result: TransformResult,
   message?: string,
 ): void => {
-  const writeSpinner = spinner(
-    message ?? `Applying changes to ${result.filePath}.`,
-  ).start();
+  const writeSpinner = spinner(message ?? `Applying changes to ${result.filePath}.`).start();
   const writeResult = applyTransform(result);
   if (!writeResult.success) {
     writeSpinner.fail();
@@ -63,9 +40,7 @@ export const applyPackageJsonWithFeedback = (
   result: PackageJsonTransformResult,
   message?: string,
 ): void => {
-  const writeSpinner = spinner(
-    message ?? `Applying changes to ${result.filePath}.`,
-  ).start();
+  const writeSpinner = spinner(message ?? `Applying changes to ${result.filePath}.`).start();
   const writeResult = applyPackageJsonTransform(result);
   if (!writeResult.success) {
     writeSpinner.fail();

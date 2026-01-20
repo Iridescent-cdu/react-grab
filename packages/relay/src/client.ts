@@ -162,10 +162,7 @@ export const createRelayClient = (
     return false;
   };
 
-  const sendAgentRequest = (
-    agentId: string,
-    context: AgentContext,
-  ): boolean => {
+  const sendAgentRequest = (agentId: string, context: AgentContext): boolean => {
     return sendMessage({
       type: "agent-request",
       agentId,
@@ -292,9 +289,8 @@ export const createRelayAgentProvider = (
     };
 
     const messageQueue: string[] = [];
-    let resolveNextMessage:
-      | ((value: IteratorResult<string, void>) => void)
-      | null = null;
+    let resolveNextMessage: ((value: IteratorResult<string, void>) => void) | null =
+      null;
     let rejectNextMessage: ((error: Error) => void) | null = null;
     let isDone = false;
     let errorMessage: string | null = null;
@@ -365,10 +361,7 @@ export const createRelayAgentProvider = (
       throw new Error("Relay connection is not open");
     }
 
-    const didSendRequest = relayClient.sendAgentRequest(
-      agentId,
-      contextWithSession,
-    );
+    const didSendRequest = relayClient.sendAgentRequest(agentId, contextWithSession);
     if (!didSendRequest) {
       unsubscribeConnection();
       unsubscribeMessage();
@@ -438,16 +431,12 @@ export const createRelayAgentProvider = (
         }
       });
 
-      const unsubscribeConnection = relayClient.onConnectionChange(
-        (connected) => {
-          if (!connected) {
-            cleanup();
-            reject(
-              new Error("Connection lost while waiting for operation response"),
-            );
-          }
-        },
-      );
+      const unsubscribeConnection = relayClient.onConnectionChange((connected) => {
+        if (!connected) {
+          cleanup();
+          reject(new Error("Connection lost while waiting for operation response"));
+        }
+      });
     });
   };
 

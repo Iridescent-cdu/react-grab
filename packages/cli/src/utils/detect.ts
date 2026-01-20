@@ -148,7 +148,9 @@ const getWorkspacePatterns = (projectRoot: string): string[] => {
       if (Array.isArray(lernaJson.packages)) {
         patterns.push(...lernaJson.packages);
       }
-    } catch {}
+    } catch {
+      // Continue
+    }
   }
 
   const packageJsonPath = join(projectRoot, "package.json");
@@ -160,7 +162,9 @@ const getWorkspacePatterns = (projectRoot: string): string[] => {
       } else if (packageJson.workspaces?.packages) {
         patterns.push(...packageJson.workspaces.packages);
       }
-    } catch {}
+    } catch {
+      // Continue
+    }
   }
 
   return [...new Set(patterns)];
@@ -229,7 +233,9 @@ export const findWorkspaceProjects = (
             readFileSync(packageJsonPath, "utf-8"),
           );
           name = packageJson.name || name;
-        } catch {}
+        } catch {
+          // Use directory name
+        }
 
         projects.push({
           name,
@@ -276,7 +282,9 @@ export const detectReactGrab = (projectRoot: string): boolean => {
       if (allDependencies["react-grab"]) {
         return true;
       }
-    } catch {}
+    } catch {
+      // Continue to file checks
+    }
   }
 
   const filesToCheck = [

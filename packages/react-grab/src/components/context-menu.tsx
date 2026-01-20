@@ -34,7 +34,6 @@ interface ContextMenuProps {
   actionContext?: ActionContext;
   onCopy: () => void;
   onCopyScreenshot: () => void;
-  onCopyHtml: () => void;
   onOpen: () => void;
   onDismiss: () => void;
   onHide: () => void;
@@ -149,11 +148,6 @@ export const ContextMenu: Component<ContextMenuProps> = (props) => {
       });
     }
     items.push({
-      label: "Copy HTML",
-      action: props.onCopyHtml,
-      enabled: true,
-    });
-    items.push({
       label: "Open",
       action: props.onOpen,
       enabled: props.hasFilePath,
@@ -168,7 +162,7 @@ export const ContextMenu: Component<ContextMenuProps> = (props) => {
           ? context
             ? customAction.enabled(context)
             : false
-          : (customAction.enabled ?? true);
+          : customAction.enabled ?? true;
 
       items.push({
         label: customAction.label,
@@ -228,7 +222,7 @@ export const ContextMenu: Component<ContextMenuProps> = (props) => {
                 ? context
                   ? customAction.enabled(context)
                   : false
-                : (customAction.enabled ?? true);
+                : customAction.enabled ?? true;
 
             if (isEnabled && context) {
               event.preventDefault();
@@ -243,7 +237,6 @@ export const ContextMenu: Component<ContextMenuProps> = (props) => {
       }
 
       if (!hasModifierKey) return;
-      if (event.repeat) return;
 
       if (keyLower === "s" && isScreenshotSupported()) {
         event.preventDefault();
@@ -272,7 +265,7 @@ export const ContextMenu: Component<ContextMenuProps> = (props) => {
                 ? context
                   ? customAction.enabled(context)
                   : false
-                : (customAction.enabled ?? true);
+                : customAction.enabled ?? true;
 
             if (isEnabled && context) {
               event.preventDefault();

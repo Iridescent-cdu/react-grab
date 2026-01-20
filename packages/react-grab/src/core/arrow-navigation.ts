@@ -1,13 +1,7 @@
 import type { OverlayBounds } from "../types.js";
-import { getElementsAtPoint } from "../utils/get-element-at-position.js";
 
-interface ElementValidator {
-  (element: Element): boolean;
-}
-
-interface BoundsCalculator {
-  (element: Element): OverlayBounds;
-}
+type ElementValidator = (element: Element) => boolean;
+type BoundsCalculator = (element: Element) => OverlayBounds;
 
 export interface ArrowNavigator {
   findNext: (key: string, currentElement: Element) => Element | null;
@@ -18,18 +12,19 @@ export const createArrowNavigator = (
   isValidGrabbableElement: ElementValidator,
   createElementBounds: BoundsCalculator,
 ): ArrowNavigator => {
-  let navigationHistory: Element[] = [];
+  let history: Element[] = [];
 
   const findVerticalNext = (
     currentElement: Element,
     direction: 1 | -1,
   ): Element | null => {
     const bounds = createElementBounds(currentElement);
-    const elementsAtPoint = getElementsAtPoint(
-      bounds.x + bounds.width / 2,
-      bounds.y + bounds.height / 2,
-    ).filter(isValidGrabbableElement);
-
+    const elementsAtPoint = document
+      .elementsFromPoint(
+        bounds.x + bounds.width / 2,
+        bounds.y + bounds.height / 2,
+      )
+      .filter(isValidGrabbableElement);
     const currentIndex = elementsAtPoint.indexOf(currentElement);
     if (currentIndex === -1) return null;
     return elementsAtPoint[currentIndex + direction] ?? null;
@@ -38,14 +33,14 @@ export const createArrowNavigator = (
   const findUp = (currentElement: Element): Element | null => {
     const nextElement = findVerticalNext(currentElement, 1);
     if (nextElement) {
-      navigationHistory.push(currentElement);
+      history.push(currentElement);
     }
     return nextElement;
   };
 
   const findDown = (currentElement: Element): Element | null => {
-    if (navigationHistory.length > 0) {
-      const previousElement = navigationHistory.pop()!;
+    if (history.length > 0) {
+      const previousElement = history.pop()!;
       if (document.contains(previousElement)) {
         return previousElement;
       }
@@ -57,25 +52,25 @@ export const createArrowNavigator = (
     currentElement: Element,
     isForward: boolean,
   ): Element | null => {
-    const findEdgeDescendant = (parentElement: Element): Element | null => {
-      const children = Array.from(parentElement.children);
+    const findEdgeDescendant = (el: Element): Element | null => {
+      const children = Array.from(el.children);
       const ordered = isForward ? children : children.reverse();
-      for (const childElement of ordered) {
+      for (const child of ordered) {
         if (isForward) {
-          if (isValidGrabbableElement(childElement)) return childElement;
-          const descendant = findEdgeDescendant(childElement);
+          if (isValidGrabbableElement(child)) return child;
+          const descendant = findEdgeDescendant(child);
           if (descendant) return descendant;
         } else {
-          const descendant = findEdgeDescendant(childElement);
+          const descendant = findEdgeDescendant(child);
           if (descendant) return descendant;
-          if (isValidGrabbableElement(childElement)) return childElement;
+          if (isValidGrabbableElement(child)) return child;
         }
       }
       return null;
     };
 
-    const getSibling = (element: Element) =>
-      isForward ? element.nextElementSibling : element.previousElementSibling;
+    const getSibling = (el: Element) =>
+      isForward ? el.nextElementSibling : el.previousElementSibling;
 
     let nextElement: Element | null = null;
 
@@ -132,7 +127,7 @@ export const createArrowNavigator = (
   };
 
   const clearHistory = () => {
-    navigationHistory = [];
+    history = [];
   };
 
   return {

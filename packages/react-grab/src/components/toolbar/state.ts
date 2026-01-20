@@ -4,25 +4,14 @@ export interface ToolbarState {
   edge: SnapEdge;
   ratio: number;
   collapsed: boolean;
-  enabled: boolean;
 }
 
 const STORAGE_KEY = "react-grab-toolbar-state";
 
 export const loadToolbarState = (): ToolbarState | null => {
   try {
-    const serializedToolbarState = localStorage.getItem(STORAGE_KEY);
-    if (!serializedToolbarState) return null;
-
-    const partialToolbarState = JSON.parse(
-      serializedToolbarState,
-    ) as Partial<ToolbarState>;
-    return {
-      edge: partialToolbarState.edge ?? "bottom",
-      ratio: partialToolbarState.ratio ?? 0.5,
-      collapsed: partialToolbarState.collapsed ?? false,
-      enabled: partialToolbarState.enabled ?? true,
-    };
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored) as ToolbarState;
   } catch {}
   return null;
 };

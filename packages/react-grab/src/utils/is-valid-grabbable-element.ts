@@ -11,5 +11,9 @@ export const isValidGrabbableElement = (element: Element): boolean => {
     return false;
   }
 
+  if (computedStyle.pointerEvents === "none") {
+    return false;
+  }
+
   return true;
 };

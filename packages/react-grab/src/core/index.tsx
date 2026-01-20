@@ -3,7 +3,6 @@ import cssText from "../../dist/styles.css";
 import {
   createMemo,
   createRoot,
-  createSignal,
   onCleanup,
   createEffect,
   createResource,
@@ -11,18 +10,10 @@ import {
 } from "solid-js";
 import { render } from "solid-js/web";
 import { createGrabStore } from "./store.js";
-import {
-  isKeyboardEventTriggeredByInput,
-  hasTextSelectionInInput,
-} from "../utils/is-keyboard-event-triggered-by-input.js";
+import { isKeyboardEventTriggeredByInput } from "../utils/is-keyboard-event-triggered-by-input.js";
 import { mountRoot } from "../utils/mount-root.js";
 import { ReactGrabRenderer } from "../components/renderer.js";
-import {
-  getStack,
-  getNearestComponentName,
-  checkIsSourceComponentName,
-  getComponentDisplayName,
-} from "./context.js";
+import { getStack, getNearestComponentName, checkIsSourceComponentName, getComponentDisplayName } from "./context.js";
 import { isSourceFile, normalizeFileName } from "bippy/source";
 import { createNoopApi } from "./noop-api.js";
 import { createEventListenerManager } from "./events.js";
@@ -34,8 +25,6 @@ import { createElementBounds } from "../utils/create-element-bounds.js";
 import { getTagName } from "../utils/get-tag-name.js";
 import {
   FEEDBACK_DURATION_MS,
-  FADE_COMPLETE_BUFFER_MS,
-  KEYDOWN_SPAM_TIMEOUT_MS,
   DRAG_THRESHOLD_PX,
   ELEMENT_DETECTION_THROTTLE_MS,
   Z_INDEX_LABEL,
@@ -43,9 +32,7 @@ import {
   BLUR_DEACTIVATION_THRESHOLD_MS,
   BOUNDS_RECALC_INTERVAL_MS,
   INPUT_FOCUS_ACTIVATION_DELAY_MS,
-  INPUT_TEXT_SELECTION_ACTIVATION_DELAY_MS,
   DEFAULT_KEY_HOLD_DURATION_MS,
-  SCREENSHOT_CAPTURE_DELAY_MS,
 } from "../constants.js";
 import { getBoundsCenter } from "../utils/get-bounds-center.js";
 import { isCLikeKey } from "../utils/is-c-like-key.js";
@@ -87,14 +74,6 @@ import { logIntro } from "./log-intro.js";
 import { onIdle } from "../utils/on-idle.js";
 import { getScriptOptions } from "../utils/get-script-options.js";
 import { isEnterCode } from "../utils/is-enter-code.js";
-import {
-  loadToolbarState,
-  saveToolbarState,
-} from "../components/toolbar/state.js";
-import {
-  freezeAnimations,
-  freezeAllAnimations,
-} from "../utils/freeze-animations.js";
 
 let hasInited = false;
 
@@ -177,43 +156,20 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         store.current.isPendingDismiss,
     );
 
-    const savedToolbarState = loadToolbarState();
-    const [isEnabled, setIsEnabled] = createSignal(
-      savedToolbarState?.enabled ?? true,
-    );
-
     const pendingAbortSessionId = createMemo(() => store.pendingAbortSessionId);
 
     const hasAgentProvider = createMemo(() => store.hasAgentProvider);
 
-    const clearHoldTimer = () => {
-      if (holdTimerId !== null) {
-        clearTimeout(holdTimerId);
-        holdTimerId = null;
-      }
-    };
-
-    const resetCopyConfirmation = () => {
-      copyWaitingForConfirmation = false;
-      holdTimerFiredWaitingForConfirmation = false;
-    };
-
+    // Timer effect: holding -> active after key hold duration
     createEffect(() => {
-      if (store.current.state !== "holding") {
-        clearHoldTimer();
-        return;
-      }
-      holdTimerId = window.setTimeout(() => {
-        holdTimerId = null;
-        if (copyWaitingForConfirmation) {
-          holdTimerFiredWaitingForConfirmation = true;
-          return;
-        }
+      if (store.current.state !== "holding") return;
+      const timerId = setTimeout(() => {
         actions.activate();
       }, store.keyHoldDuration);
-      onCleanup(clearHoldTimer);
+      onCleanup(() => clearTimeout(timerId));
     });
 
+    // Timer effect: justDragged -> hovering after success label duration
     createEffect(() => {
       if (
         store.current.state !== "active" ||
@@ -226,6 +182,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       onCleanup(() => clearTimeout(timerId));
     });
 
+    // Timer effect: justCopied -> idle after copied label duration
     createEffect(() => {
       if (store.current.state !== "justCopied") return;
       const timerId = setTimeout(() => {
@@ -287,12 +244,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
 
     let lastElementDetectionTime = 0;
     let keydownSpamTimerId: number | null = null;
-    let holdTimerId: number | null = null;
-    let copyWaitingForConfirmation = false;
-    let holdTimerFiredWaitingForConfirmation = false;
     let isScreenshotInProgress = false;
-    let inToggleFeedbackPeriod = false;
-    let toggleFeedbackTimerId: number | null = null;
 
     const arrowNavigator = createArrowNavigator(
       isValidGrabbableElement,
@@ -361,7 +313,6 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       actions.clearLabelInstances();
       const instanceId = `label-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const boundsCenterX = bounds.x + bounds.width / 2;
-
       const instance: SelectionLabelInstance = {
         id: instanceId,
         bounds,
@@ -373,8 +324,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         element,
         elements,
         mouseX,
-        mouseXOffsetFromCenter:
-          mouseX !== undefined ? mouseX - boundsCenterX : undefined,
+        mouseXOffsetFromCenter: mouseX !== undefined ? mouseX - boundsCenterX : undefined,
       };
       actions.addLabelInstance(instance);
       return instanceId;
@@ -403,20 +353,19 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       shouldDeactivateAfter?: boolean,
       elements?: Element[],
     ) => {
-      inToggleFeedbackPeriod = false;
       actions.startCopy();
 
       const instanceId =
         bounds && tagName
           ? createLabelInstance(
-              bounds,
-              tagName,
-              componentName,
-              "copying",
-              element,
-              positionX,
-              elements,
-            )
+            bounds,
+            tagName,
+            componentName,
+            "copying",
+            element,
+            positionX,
+            elements,
+          )
           : null;
 
       await operation().finally(() => {
@@ -430,22 +379,12 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
             // HACK: Wait slightly longer than CSS transition (100ms) to ensure fade completes before unmount
             setTimeout(() => {
               removeLabelInstance(instanceId);
-            }, FADE_COMPLETE_BUFFER_MS);
+            }, 150);
           }, FEEDBACK_DURATION_MS);
         }
 
-        if (shouldDeactivateAfter) {
+        if (store.wasActivatedByToggle || shouldDeactivateAfter) {
           deactivateRenderer();
-        } else {
-          actions.activate();
-          inToggleFeedbackPeriod = true;
-          if (toggleFeedbackTimerId !== null) {
-            window.clearTimeout(toggleFeedbackTimerId);
-          }
-          toggleFeedbackTimerId = window.setTimeout(() => {
-            inToggleFeedbackPeriod = false;
-            toggleFeedbackTimerId = null;
-          }, FEEDBACK_DURATION_MS);
         }
       });
     };
@@ -540,15 +479,9 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         if (!document.contains(element)) {
           actions.setDetectedElement(null);
         }
-      }, BOUNDS_RECALC_INTERVAL_MS);
+      }, 100);
 
       onCleanup(() => clearInterval(intervalId));
-    });
-
-    createEffect(() => {
-      const elements = store.frozenElements;
-      const cleanup = freezeAnimations(elements);
-      onCleanup(cleanup);
     });
 
     const selectionBounds = createMemo((): OverlayBounds | undefined => {
@@ -734,19 +667,19 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         ]) => {
           const isSelectionBoxVisible = Boolean(
             themeEnabled &&
-              selectionBoxEnabled &&
-              active &&
-              !copying &&
-              !justCopied &&
-              !dragging &&
-              effectiveTarget != null,
+            selectionBoxEnabled &&
+            active &&
+            !copying &&
+            !justCopied &&
+            !dragging &&
+            effectiveTarget != null,
           );
           const isDragBoxVisible = Boolean(
             themeEnabled &&
-              dragBoxEnabled &&
-              active &&
-              !copying &&
-              draggingBeyondThreshold,
+            dragBoxEnabled &&
+            active &&
+            !copying &&
+            draggingBeyondThreshold,
           );
           pluginRegistry.hooks.onStateChange({
             isActive: active,
@@ -759,11 +692,11 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
             targetElement: target,
             dragBounds: drag
               ? {
-                  x: drag.x,
-                  y: drag.y,
-                  width: drag.width,
-                  height: drag.height,
-                }
+                x: drag.x,
+                y: drag.y,
+                width: drag.width,
+                height: drag.height,
+              }
               : null,
             grabbedBoxes: grabbedBoxes.map((box) => ({
               id: box.id,
@@ -1129,40 +1062,13 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
     const handleToggleActive = () => {
       if (isActivated()) {
         deactivateRenderer();
-      } else if (isEnabled()) {
+      } else {
         toggleActivate();
-      }
-    };
-
-    const handleToggleEnabled = () => {
-      const newEnabled = !isEnabled();
-      setIsEnabled(newEnabled);
-      const currentState = loadToolbarState();
-      saveToolbarState({
-        edge: currentState?.edge ?? "bottom",
-        ratio: currentState?.ratio ?? 0.5,
-        collapsed: currentState?.collapsed ?? false,
-        enabled: newEnabled,
-      });
-      if (!newEnabled) {
-        if (isHoldingKeys()) {
-          actions.release();
-        }
-        if (isActivated()) {
-          deactivateRenderer();
-        }
-        // Clear toggle feedback state to prevent stale state from affecting re-enable
-        if (toggleFeedbackTimerId !== null) {
-          window.clearTimeout(toggleFeedbackTimerId);
-          toggleFeedbackTimerId = null;
-        }
-        inToggleFeedbackPeriod = false;
       }
     };
 
     const handlePointerMove = (clientX: number, clientY: number) => {
       if (
-        !isEnabled() ||
         isPromptMode() ||
         isToggleFrozen() ||
         store.contextMenuPosition !== null
@@ -1221,14 +1127,12 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         elements.length > 0
           ? elements
           : getElementsInDrag(
-              dragSelectionRect,
-              isValidGrabbableElement,
-              false,
-            );
+            dragSelectionRect,
+            isValidGrabbableElement,
+            false,
+          );
 
       if (selectedElements.length === 0) return;
-
-      freezeAllAnimations(selectedElements);
 
       pluginRegistry.hooks.onDragEnd(selectedElements, dragSelectionRect);
       const firstElement = selectedElements[0];
@@ -1253,31 +1157,19 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       }
     };
 
-    const handleSingleClick = (
-      clientX: number,
-      clientY: number,
-      hasModifierKeyHeld: boolean,
-    ) => {
+    const handleSingleClick = (clientX: number, clientY: number) => {
       const element = getElementAtPosition(clientX, clientY);
       if (!element) return;
-
-      const shouldDeactivateAfter =
-        store.wasActivatedByToggle && !hasModifierKeyHeld;
 
       actions.setLastGrabbed(element);
       performCopyWithLabel({
         element,
         positionX: clientX,
         positionY: clientY,
-        shouldDeactivateAfter,
       });
     };
 
-    const handlePointerUp = (
-      clientX: number,
-      clientY: number,
-      hasModifierKeyHeld = false,
-    ) => {
+    const handlePointerUp = (clientX: number, clientY: number) => {
       if (!isDragging()) return;
 
       const dragDistance = calculateDragDistance(clientX, clientY);
@@ -1301,7 +1193,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       if (dragSelectionRect) {
         handleDragSelection(dragSelectionRect);
       } else {
-        handleSingleClick(clientX, clientY, hasModifierKeyHeld);
+        handleSingleClick(clientX, clientY);
       }
     };
 
@@ -1533,7 +1425,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       rendererRoot.style.visibility = "hidden";
 
       void (async () => {
-        await delay(SCREENSHOT_CAPTURE_DELAY_MS);
+        await delay(50);
 
         let didSucceed = false;
         let errorMessage: string | undefined;
@@ -1564,7 +1456,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
           updateLabelInstance(instanceId, "fading");
           setTimeout(() => {
             removeLabelInstance(instanceId);
-          }, FADE_COMPLETE_BUFFER_MS);
+          }, 150);
         }, FEEDBACK_DURATION_MS);
 
         if (shouldDeactivate) {
@@ -1621,37 +1513,19 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         }
         keydownSpamTimerId = window.setTimeout(() => {
           deactivateRenderer();
-        }, KEYDOWN_SPAM_TIMEOUT_MS);
+        }, 200);
         return;
       }
 
-      if (isHoldingKeys() && event.repeat) {
-        if (copyWaitingForConfirmation) {
-          const shouldActivate = holdTimerFiredWaitingForConfirmation;
-          resetCopyConfirmation();
-          if (shouldActivate) {
-            actions.activate();
-          }
-        }
-        return;
-      }
-
-      if (isCopying() || didJustCopy()) return;
+      if (isHoldingKeys() && event.repeat) return;
 
       if (!isHoldingKeys()) {
         const keyHoldDuration =
           pluginRegistry.store.options.keyHoldDuration ??
           DEFAULT_KEY_HOLD_DURATION_MS;
-
-        let activationDuration = keyHoldDuration;
-        if (isKeyboardEventTriggeredByInput(event)) {
-          if (hasTextSelectionInInput(event)) {
-            activationDuration += INPUT_TEXT_SELECTION_ACTIVATION_DELAY_MS;
-          } else {
-            activationDuration += INPUT_FOCUS_ACTIVATION_DELAY_MS;
-          }
-        }
-        resetCopyConfirmation();
+        const activationDuration = isKeyboardEventTriggeredByInput(event)
+          ? keyHoldDuration + INPUT_FOCUS_ACTIVATION_DELAY_MS
+          : keyHoldDuration;
         actions.startHold(activationDuration);
       }
     };
@@ -1660,8 +1534,6 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       "keydown",
       (event: KeyboardEvent) => {
         blockEnterIfNeeded(event);
-
-        if (!isEnabled()) return;
 
         if (handleUndoRedoKeys(event)) return;
 
@@ -1729,6 +1601,13 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       (event: KeyboardEvent) => {
         if (blockEnterIfNeeded(event)) return;
 
+        if (!isHoldingKeys() && !isActivated()) return;
+        if (isPromptMode()) return;
+
+        const hasCustomShortcut = Boolean(
+          pluginRegistry.store.options.activationKey,
+        );
+
         const requiredModifiers = getRequiredModifiers(
           pluginRegistry.store.options,
         );
@@ -1736,31 +1615,16 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
           requiredModifiers.metaKey || requiredModifiers.ctrlKey
             ? !event.metaKey && !event.ctrlKey
             : (requiredModifiers.shiftKey && !event.shiftKey) ||
-              (requiredModifiers.altKey && !event.altKey);
+            (requiredModifiers.altKey && !event.altKey);
 
         const isReleasingActivationKey = pluginRegistry.store.options
           .activationKey
           ? typeof pluginRegistry.store.options.activationKey === "function"
             ? pluginRegistry.store.options.activationKey(event)
             : parseActivationKey(pluginRegistry.store.options.activationKey)(
-                event,
-              )
+              event,
+            )
           : isCLikeKey(event.key, event.code);
-
-        if (didJustCopy() || inToggleFeedbackPeriod) {
-          if (isReleasingActivationKey || isReleasingModifier) {
-            inToggleFeedbackPeriod = false;
-            deactivateRenderer();
-          }
-          return;
-        }
-
-        if (!isHoldingKeys() && !isActivated()) return;
-        if (isPromptMode()) return;
-
-        const hasCustomShortcut = Boolean(
-          pluginRegistry.store.options.activationKey,
-        );
 
         const isHoldMode =
           pluginRegistry.store.options.activationMode === "hold";
@@ -1799,22 +1663,8 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
             pluginRegistry.store.options.activationMode !== "hold"
           )
             return;
-
-          const shouldRelease =
-            isHoldingKeys() ||
-            (holdTimerFiredWaitingForConfirmation && isReleasingModifier);
-
-          if (shouldRelease) {
-            clearHoldTimer();
-            const shouldActivateAfterCopy =
-              holdTimerFiredWaitingForConfirmation &&
-              !isKeyboardEventTriggeredByInput(event);
-            resetCopyConfirmation();
-            if (shouldActivateAfterCopy) {
-              actions.activate();
-            } else {
-              actions.release();
-            }
+          if (isHoldingKeys()) {
+            actions.release();
           } else {
             deactivateRenderer();
           }
@@ -1822,12 +1672,6 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       },
       { capture: true },
     );
-
-    eventListenerManager.addDocumentListener("copy", () => {
-      if (isHoldingKeys()) {
-        copyWaitingForConfirmation = true;
-      }
-    });
 
     eventListenerManager.addWindowListener("keypress", blockEnterIfNeeded, {
       capture: true,
@@ -1883,11 +1727,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         if (event.button !== 0) return;
         if (isEventFromOverlay(event, "data-react-grab-ignore-events")) return;
         if (store.contextMenuPosition !== null) return;
-        handlePointerUp(
-          event.clientX,
-          event.clientY,
-          event.metaKey || event.ctrlKey,
-        );
+        handlePointerUp(event.clientX, event.clientY);
       },
       { capture: true },
     );
@@ -1898,11 +1738,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         if (event.button !== 0) return;
         if (isEventFromOverlay(event, "data-react-grab-ignore-events")) return;
         if (store.contextMenuPosition !== null) return;
-        handlePointerUp(
-          event.clientX,
-          event.clientY,
-          event.metaKey || event.ctrlKey,
-        );
+        handlePointerUp(event.clientX, event.clientY);
       },
       { capture: true },
     );
@@ -1923,20 +1759,9 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         const element = getElementAtPosition(event.clientX, event.clientY);
         if (!element) return;
 
-        const existingFrozenElements = store.frozenElements;
-        const isClickedElementAlreadyFrozen =
-          existingFrozenElements.length > 1 &&
-          existingFrozenElements.includes(element);
-
-        if (isClickedElementAlreadyFrozen) {
-          freezeAllAnimations(existingFrozenElements);
-        } else {
-          freezeAllAnimations([element]);
-          actions.setFrozenElement(element);
-        }
-
         const position = { x: event.clientX, y: event.clientY };
         actions.setPointer(position);
+        actions.setFrozenElement(element);
         actions.freeze();
         actions.showContextMenu(position, element);
         pluginRegistry.hooks.onContextMenu(element, position);
@@ -2115,7 +1940,6 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
     onCleanup(() => {
       eventListenerManager.abort();
       if (keydownSpamTimerId) window.clearTimeout(keydownSpamTimerId);
-      if (toggleFeedbackTimerId) window.clearTimeout(toggleFeedbackTimerId);
       autoScroller.stop();
       document.body.style.userSelect = "";
       setCursorOverride(null);
@@ -2192,10 +2016,9 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
           return previousInstance;
         }
         const newBoundsCenterX = newBounds.x + newBounds.width / 2;
-        const newMouseX =
-          instance.mouseXOffsetFromCenter !== undefined
-            ? newBoundsCenterX + instance.mouseXOffsetFromCenter
-            : instance.mouseX;
+        const newMouseX = instance.mouseXOffsetFromCenter !== undefined
+          ? newBoundsCenterX + instance.mouseXOffsetFromCenter
+          : instance.mouseX;
         const newCached = { ...instance, bounds: newBounds, mouseX: newMouseX };
         labelInstanceCache.set(instance.id, newCached);
         return newCached;
@@ -2259,21 +2082,13 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
     const contextMenuTagName = createMemo(() => {
       const element = store.contextMenuElement;
       if (!element) return undefined;
-      const frozenCount = store.frozenElements.length;
-      if (frozenCount > 1) {
-        return `${frozenCount} elements`;
-      }
       return getTagName(element) || undefined;
     });
 
     const [contextMenuComponentName] = createResource(
-      () => ({
-        element: store.contextMenuElement,
-        frozenCount: store.frozenElements.length,
-      }),
-      async ({ element, frozenCount }) => {
+      () => store.contextMenuElement,
+      async (element) => {
         if (!element) return undefined;
-        if (frozenCount > 1) return undefined;
         const name = await getNearestComponentName(element);
         return name ?? undefined;
       },
@@ -2374,7 +2189,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
 
       isScreenshotInProgress = true;
       rendererRoot.style.visibility = "hidden";
-      await delay(SCREENSHOT_CAPTURE_DELAY_MS);
+      await delay(50);
 
       let didSucceed = false;
       let errorMessage: string | undefined;
@@ -2405,76 +2220,8 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
         updateLabelInstance(instanceId, "fading");
         setTimeout(() => {
           removeLabelInstance(instanceId);
-        }, FADE_COMPLETE_BUFFER_MS);
+        }, 150);
       }, FEEDBACK_DURATION_MS);
-
-      if (shouldDeactivate) {
-        deactivateRenderer();
-      } else {
-        actions.unfreeze();
-      }
-    };
-
-    const handleContextMenuCopyHtml = async () => {
-      const element = store.contextMenuElement;
-      if (!element) return;
-
-      const frozenElements = [...store.frozenElements];
-      const elementsToUse =
-        frozenElements.length > 0 ? frozenElements : [element];
-
-      const html = elementsToUse
-        .map((el) => (el as HTMLElement).outerHTML)
-        .join("\n\n");
-
-      const position = store.contextMenuPosition ?? store.pointer;
-      const allBounds = frozenElementsBounds();
-      const singleBounds = contextMenuBounds();
-      const combinedBounds =
-        allBounds.length > 1 ? combineBounds(allBounds) : null;
-      const bounds = combinedBounds
-        ? { ...combinedBounds, borderRadius: "0px", transform: "" }
-        : singleBounds;
-      const tagName = getTagName(element) || "element";
-      const componentName = contextMenuComponentName();
-      const shouldDeactivate = store.wasActivatedByToggle;
-      const selectionBoundsArray =
-        allBounds.length > 1 ? allBounds : singleBounds ? [singleBounds] : [];
-
-      actions.hideContextMenu();
-
-      if (bounds) {
-        const labelPositionX =
-          allBounds.length > 1 ? bounds.x + bounds.width / 2 : position.x;
-        const instanceId = createLabelInstance(
-          bounds,
-          tagName,
-          componentName,
-          "copying",
-          element,
-          labelPositionX,
-          frozenElements.length > 1 ? frozenElements : undefined,
-          selectionBoundsArray,
-        );
-
-        try {
-          await navigator.clipboard.writeText(html);
-          updateLabelInstance(instanceId, "copied");
-        } catch {
-          updateLabelInstance(instanceId, "error", "Failed to copy");
-        }
-
-        setTimeout(() => {
-          updateLabelInstance(instanceId, "fading");
-          setTimeout(() => {
-            removeLabelInstance(instanceId);
-          }, FADE_COMPLETE_BUFFER_MS);
-        }, FEEDBACK_DURATION_MS);
-      } else {
-        try {
-          await navigator.clipboard.writeText(html);
-        } catch {}
-      }
 
       if (shouldDeactivate) {
         deactivateRenderer();
@@ -2662,9 +2409,6 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
             toolbarVisible={pluginRegistry.store.theme.toolbar.enabled}
             isActive={isActivated()}
             onToggleActive={handleToggleActive}
-            enabled={isEnabled()}
-            onToggleEnabled={handleToggleEnabled}
-            toolbarConfig={pluginRegistry.store.toolbarConfig}
             contextMenuPosition={contextMenuPosition()}
             contextMenuBounds={contextMenuBounds()}
             contextMenuTagName={contextMenuTagName()}
@@ -2677,7 +2421,6 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
             onContextMenuCopyScreenshot={() =>
               void handleContextMenuCopyScreenshot()
             }
-            onContextMenuCopyHtml={() => void handleContextMenuCopyHtml()}
             onContextMenuOpen={handleContextMenuOpen}
             onContextMenuDismiss={handleContextMenuDismiss}
             onContextMenuHide={handleContextMenuHide}
@@ -2748,7 +2491,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
 
     const api: ReactGrabAPI = {
       activate: () => {
-        if (!isActivated() && isEnabled()) {
+        if (!isActivated()) {
           toggleActivate();
         }
       },
@@ -2760,7 +2503,7 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
       toggle: () => {
         if (isActivated()) {
           deactivateRenderer();
-        } else if (isEnabled()) {
+        } else {
           toggleActivate();
         }
       },
@@ -2778,11 +2521,9 @@ export const init = (rawOptions?: Options): ReactGrabAPI => {
             return {
               filePath: normalizeFileName(frame.fileName),
               lineNumber: frame.lineNumber ?? null,
-              componentName:
-                frame.functionName &&
-                checkIsSourceComponentName(frame.functionName)
-                  ? frame.functionName
-                  : null,
+              componentName: frame.functionName && checkIsSourceComponentName(frame.functionName)
+                ? frame.functionName
+                : null,
             };
           }
         }

@@ -195,9 +195,7 @@ test.describe("Prompt Mode", () => {
       expect(isPromptMode).toBe(true);
     });
 
-    test("prompt mode via drag selection should work", async ({
-      reactGrab,
-    }) => {
+    test("prompt mode via drag selection should work", async ({ reactGrab }) => {
       await reactGrab.setupMockAgent();
       await reactGrab.activate();
 
@@ -222,12 +220,10 @@ test.describe("Prompt Mode", () => {
 
       await reactGrab.clickContextMenuItem("Edit");
 
-      await expect
-        .poll(async () => {
-          const labelInfo = await reactGrab.getSelectionLabelInfo();
-          return labelInfo.isVisible && (labelInfo.elementsCount ?? 0) > 1;
-        })
-        .toBe(true);
+      await expect.poll(async () => {
+        const labelInfo = await reactGrab.getSelectionLabelInfo();
+        return labelInfo.isVisible && (labelInfo.elementsCount ?? 0) > 1;
+      }).toBe(true);
     });
   });
 
@@ -276,9 +272,7 @@ test.describe("Prompt Mode", () => {
   });
 
   test.describe("Edge Cases", () => {
-    test("clicking outside should cancel prompt mode", async ({
-      reactGrab,
-    }) => {
+    test("clicking outside should cancel prompt mode", async ({ reactGrab }) => {
       await reactGrab.setupMockAgent();
       await reactGrab.enterPromptMode("li:first-child");
 

@@ -1,9 +1,9 @@
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object
-    ? T[P] extends (...args: unknown[]) => unknown
-      ? T[P]
-      : DeepPartial<T[P]>
-    : T[P];
+  ? T[P] extends (...args: unknown[]) => unknown
+  ? T[P]
+  : DeepPartial<T[P]>
+  : T[P];
 };
 
 export interface Theme {
@@ -125,7 +125,9 @@ export interface ElementLabelContext {
   lineNumber?: number;
 }
 
-export type ActivationKey = string | ((event: KeyboardEvent) => boolean);
+export type ActivationKey =
+  | string
+  | ((event: KeyboardEvent) => boolean);
 
 export interface AgentContext<T = unknown> {
   content: string[];
@@ -271,7 +273,6 @@ export interface PluginConfig {
   options?: SettableOptions;
   actions?: ContextMenuAction[];
   toolbarActions?: ToolbarAction[];
-  showToggle?: boolean;
   hooks?: PluginHooks;
   cleanup?: () => void;
 }
@@ -282,7 +283,6 @@ export interface Plugin {
   options?: SettableOptions;
   actions?: ContextMenuAction[];
   toolbarActions?: ToolbarAction[];
-  showToggle?: boolean;
   hooks?: PluginHooks;
   setup?: (api: ReactGrabAPI) => PluginConfig | void;
 }
@@ -405,11 +405,6 @@ export interface ReactGrabRendererProps {
   toolbarVisible?: boolean;
   isActive?: boolean;
   onToggleActive?: () => void;
-  enabled?: boolean;
-  onToggleEnabled?: () => void;
-  toolbarConfig?: {
-    showToggle?: boolean;
-  };
   contextMenuPosition?: { x: number; y: number } | null;
   contextMenuBounds?: OverlayBounds | null;
   contextMenuTagName?: string;
@@ -420,7 +415,6 @@ export interface ReactGrabRendererProps {
   actionContext?: ActionContext;
   onContextMenuCopy?: () => void;
   onContextMenuCopyScreenshot?: () => void;
-  onContextMenuCopyHtml?: () => void;
   onContextMenuOpen?: () => void;
   onContextMenuDismiss?: () => void;
   onContextMenuHide?: () => void;

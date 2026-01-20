@@ -25,11 +25,7 @@ export const ReactGrabRenderer: Component<ReactGrabRendererProps> = (props) => {
         labelInstances={props.labelInstances}
       />
 
-      <Index
-        each={
-          props.agentSessions ? Array.from(props.agentSessions.values()) : []
-        }
-      >
+      <Index each={props.agentSessions ? Array.from(props.agentSessions.values()) : []}>
         {(session) => (
           <>
             <Show when={session().selectionBounds.length > 0}>
@@ -41,11 +37,13 @@ export const ReactGrabRenderer: Component<ReactGrabRendererProps> = (props) => {
                 visible={true}
                 hasAgent={true}
                 isAgentConnected={true}
-                status={(() => {
-                  if (session().isFading) return "fading";
-                  if (session().isStreaming) return "copying";
-                  return "copied";
-                })()}
+                status={
+                  session().isFading
+                    ? "fading"
+                    : session().isStreaming
+                      ? "copying"
+                      : "copied"
+                }
                 statusText={session().lastStatus || "Thinking…"}
                 inputValue={session().context.prompt}
                 previousPrompt={session().context.prompt}
@@ -152,14 +150,7 @@ export const ReactGrabRenderer: Component<ReactGrabRendererProps> = (props) => {
       </Index>
 
       <Show when={props.toolbarVisible !== false}>
-        <Toolbar
-          isActive={props.isActive}
-          onToggle={props.onToggleActive}
-          enabled={props.enabled}
-          onToggleEnabled={props.onToggleEnabled}
-          toolbarActions={props.toolbarActions}
-          toolbarConfig={props.toolbarConfig}
-        />
+        <Toolbar isActive={props.isActive} onToggle={props.onToggleActive} toolbarActions={props.toolbarActions} />
       </Show>
 
       <ContextMenu
@@ -172,7 +163,6 @@ export const ReactGrabRenderer: Component<ReactGrabRendererProps> = (props) => {
         actionContext={props.actionContext}
         onCopy={props.onContextMenuCopy ?? (() => { })}
         onCopyScreenshot={props.onContextMenuCopyScreenshot ?? (() => { })}
-        onCopyHtml={props.onContextMenuCopyHtml ?? (() => { })}
         onOpen={props.onContextMenuOpen ?? (() => { })}
         onDismiss={props.onContextMenuDismiss ?? (() => { })}
         onHide={props.onContextMenuHide ?? (() => { })}

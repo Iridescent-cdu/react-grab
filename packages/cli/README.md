@@ -5,7 +5,7 @@ Interactive CLI to install React Grab in your project.
 ## Usage
 
 ```bash
-npx grab
+npx @react-grab/cli
 ```
 
 ### Interactive Mode (default)
@@ -13,7 +13,7 @@ npx grab
 Running without options starts the interactive wizard:
 
 ```bash
-npx grab
+npx @react-grab/cli
 ```
 
 ### Non-Interactive Mode
@@ -22,44 +22,44 @@ Pass options to skip prompts:
 
 ```bash
 # Auto-detect everything and install without prompts
-npx grab -y
+npx @react-grab/cli -y
 
 # Specify framework
-npx grab -f next -r app -y
+npx @react-grab/cli -f next -r app -y
 
 # Use specific package manager
-npx grab -p pnpm -y
+npx @react-grab/cli -p pnpm -y
 ```
 
 ## Options
 
-| Option              | Alias | Description                                   | Choices                      |
-| ------------------- | ----- | --------------------------------------------- | ---------------------------- |
-| `--framework`       | `-f`  | Framework to configure                        | `next`, `vite`, `webpack`    |
-| `--package-manager` | `-p`  | Package manager to use                        | `npm`, `yarn`, `pnpm`, `bun` |
-| `--router`          | `-r`  | Next.js router type                           | `app`, `pages`               |
-| `--yes`             | `-y`  | Skip all confirmation prompts                 | -                            |
-| `--skip-install`    | -     | Skip package installation (only modify files) | -                            |
-| `--help`            | `-h`  | Show help                                     | -                            |
-| `--version`         | `-v`  | Show version                                  | -                            |
+| Option              | Alias | Description                                   | Choices                                                               |
+| ------------------- | ----- | --------------------------------------------- | --------------------------------------------------------------------- |
+| `--framework`       | `-f`  | Framework to configure                        | `next`, `vite`, `webpack`                                             |
+| `--package-manager` | `-p`  | Package manager to use                        | `npm`, `yarn`, `pnpm`, `bun`                                          |
+| `--router`          | `-r`  | Next.js router type                           | `app`, `pages`                                                        |
+| `--yes`             | `-y`  | Skip all confirmation prompts                 | -                                                                     |
+| `--skip-install`    | -     | Skip package installation (only modify files) | -                                                                     |
+| `--help`            | `-h`  | Show help                                     | -                                                                     |
+| `--version`         | `-v`  | Show version                                  | -                                                                     |
 
 ## Examples
 
 ```bash
 # Interactive setup
-npx grab
+npx @react-grab/cli
 
 # Quick install with auto-detection
-npx grab -y
+npx @react-grab/cli -y
 
 # Next.js App Router
-npx grab -f next -r app -y
+npx @react-grab/cli -f next -r app -y
 
 # Vite with pnpm
-npx grab -f vite -p pnpm -y
+npx @react-grab/cli -f vite -p pnpm -y
 
 # Only modify files (skip npm install)
-npx grab --skip-install -y
+npx @react-grab/cli --skip-install -y
 ```
 
 ## Supported Frameworks

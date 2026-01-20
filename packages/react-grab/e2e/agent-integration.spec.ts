@@ -101,20 +101,15 @@ test.describe("Agent Integration", () => {
       await reactGrab.typeInInput("Trigger error");
       await reactGrab.submitInput();
 
-      await expect
-        .poll(
-          async () => {
-            return reactGrab.page.evaluate((attrName) => {
-              const host = document.querySelector(`[${attrName}]`);
-              const shadowRoot = host?.shadowRoot;
-              if (!shadowRoot) return false;
-              const root = shadowRoot.querySelector(`[${attrName}]`);
-              return !!root?.querySelector("[data-react-grab-error]");
-            }, "data-react-grab");
-          },
-          { timeout: 3000 },
-        )
-        .toBe(true);
+      await expect.poll(async () => {
+        return reactGrab.page.evaluate((attrName) => {
+          const host = document.querySelector(`[${attrName}]`);
+          const shadowRoot = host?.shadowRoot;
+          if (!shadowRoot) return false;
+          const root = shadowRoot.querySelector(`[${attrName}]`);
+          return !!root?.querySelector("[data-react-grab-error]");
+        }, "data-react-grab");
+      }, { timeout: 3000 }).toBe(true);
     });
 
     test("should show retry option on error", async ({ reactGrab }) => {
@@ -124,22 +119,15 @@ test.describe("Agent Integration", () => {
       await reactGrab.typeInInput("Test");
       await reactGrab.submitInput();
 
-      await expect
-        .poll(
-          async () => {
-            return reactGrab.page.evaluate((attrName) => {
-              const host = document.querySelector(`[${attrName}]`);
-              const shadowRoot = host?.shadowRoot;
-              if (!shadowRoot) return false;
-              const root = shadowRoot.querySelector(`[${attrName}]`);
-              return (
-                root?.textContent?.toLowerCase().includes("retry") ?? false
-              );
-            }, "data-react-grab");
-          },
-          { timeout: 2000 },
-        )
-        .toBe(true);
+      await expect.poll(async () => {
+        return reactGrab.page.evaluate((attrName) => {
+          const host = document.querySelector(`[${attrName}]`);
+          const shadowRoot = host?.shadowRoot;
+          if (!shadowRoot) return false;
+          const root = shadowRoot.querySelector(`[${attrName}]`);
+          return root?.textContent?.toLowerCase().includes("retry") ?? false;
+        }, "data-react-grab");
+      }, { timeout: 2000 }).toBe(true);
     });
   });
 
@@ -155,9 +143,7 @@ test.describe("Agent Integration", () => {
 
       await reactGrab.clickAgentDismiss();
 
-      await expect
-        .poll(() => reactGrab.isAgentSessionVisible(), { timeout: 2000 })
-        .toBe(false);
+      await expect.poll(() => reactGrab.isAgentSessionVisible(), { timeout: 2000 }).toBe(false);
     });
 
     test("should abort streaming session", async ({ reactGrab }) => {
@@ -171,25 +157,16 @@ test.describe("Agent Integration", () => {
 
       await reactGrab.clickAgentAbort();
 
-      await expect
-        .poll(
-          async () => {
-            return reactGrab.page.evaluate((attrName) => {
-              const host = document.querySelector(`[${attrName}]`);
-              const shadowRoot = host?.shadowRoot;
-              if (!shadowRoot) return false;
-              const root = shadowRoot.querySelector(`[${attrName}]`);
-              const text = root?.textContent?.toLowerCase() ?? "";
-              return (
-                text.includes("discard") ||
-                text.includes("abort") ||
-                text.includes("stop")
-              );
-            }, "data-react-grab");
-          },
-          { timeout: 2000 },
-        )
-        .toBe(true);
+      await expect.poll(async () => {
+        return reactGrab.page.evaluate((attrName) => {
+          const host = document.querySelector(`[${attrName}]`);
+          const shadowRoot = host?.shadowRoot;
+          if (!shadowRoot) return false;
+          const root = shadowRoot.querySelector(`[${attrName}]`);
+          const text = root?.textContent?.toLowerCase() ?? "";
+          return text.includes("discard") || text.includes("abort") || text.includes("stop");
+        }, "data-react-grab");
+      }, { timeout: 2000 }).toBe(true);
     });
 
     test("should confirm abort", async ({ reactGrab }) => {
@@ -204,15 +181,10 @@ test.describe("Agent Integration", () => {
       await reactGrab.clickAgentAbort();
       await reactGrab.confirmAgentAbort();
 
-      await expect
-        .poll(
-          async () => {
-            const sessions = await reactGrab.getAgentSessions();
-            return sessions.length;
-          },
-          { timeout: 2000 },
-        )
-        .toBeLessThanOrEqual(1);
+      await expect.poll(async () => {
+        const sessions = await reactGrab.getAgentSessions();
+        return sessions.length;
+      }, { timeout: 2000 }).toBeLessThanOrEqual(1);
     });
 
     test("should cancel abort", async ({ reactGrab }) => {
@@ -242,20 +214,15 @@ test.describe("Agent Integration", () => {
 
       await reactGrab.waitForAgentComplete(3000);
 
-      await expect
-        .poll(
-          async () => {
-            return reactGrab.page.evaluate((attrName) => {
-              const host = document.querySelector(`[${attrName}]`);
-              const shadowRoot = host?.shadowRoot;
-              if (!shadowRoot) return false;
-              const root = shadowRoot.querySelector(`[${attrName}]`);
-              return root?.textContent?.toLowerCase().includes("undo") ?? false;
-            }, "data-react-grab");
-          },
-          { timeout: 2000 },
-        )
-        .toBe(true);
+      await expect.poll(async () => {
+        return reactGrab.page.evaluate((attrName) => {
+          const host = document.querySelector(`[${attrName}]`);
+          const shadowRoot = host?.shadowRoot;
+          if (!shadowRoot) return false;
+          const root = shadowRoot.querySelector(`[${attrName}]`);
+          return root?.textContent?.toLowerCase().includes("undo") ?? false;
+        }, "data-react-grab");
+      }, { timeout: 2000 }).toBe(true);
     });
 
     test("should trigger undo via keyboard shortcut", async ({ reactGrab }) => {

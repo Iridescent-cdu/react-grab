@@ -51,9 +51,7 @@ const promptSkillInstall = async (cwd: string): Promise<void> => {
     return;
   }
 
-  logger.log(
-    `The ${highlighter.info("React Grab skill")} gives your agent access to the browser.`,
-  );
+  logger.log(`The ${highlighter.info("React Grab skill")} gives your agent access to the browser.`);
   logger.log(`Learn more at ${highlighter.info("https://skill.md")}`);
   logger.break();
 
@@ -81,23 +79,16 @@ const promptSkillInstall = async (cwd: string): Promise<void> => {
 
   if (selectedAgent) {
     logger.break();
-    const skillSpinner = spinner(
-      `Installing skill for ${selectedAgent.name}`,
-    ).start();
+    const skillSpinner = spinner(`Installing skill for ${selectedAgent.name}`).start();
     try {
-      execSync(
-        `npx -y add-skill aidenybai/react-grab -y --agent ${selectedAgent.id}`,
-        {
-          stdio: "ignore",
-          cwd,
-        },
-      );
+      execSync(`npx -y add-skill aidenybai/react-grab -y --agent ${selectedAgent.id}`, {
+        stdio: "ignore",
+        cwd,
+      });
       skillSpinner.succeed(`Skill installed for ${selectedAgent.name}.`);
     } catch {
       skillSpinner.fail(`Failed to install skill for ${selectedAgent.name}.`);
-      logger.warn(
-        `Try manually: npx -y add-skill aidenybai/react-grab --agent ${selectedAgent.id}`,
-      );
+      logger.warn(`Try manually: npx -y add-skill aidenybai/react-grab --agent ${selectedAgent.id}`);
     }
   }
 
@@ -112,22 +103,26 @@ interface ReportConfig {
   isMonorepo: boolean;
 }
 
-const reportToCli = (
+const reportToCli = async (
   type: "error" | "completed",
   config?: ReportConfig,
   error?: Error,
-): void => {
-  fetch(REPORT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type,
-      version: VERSION,
-      config,
-      error: error ? { message: error.message, stack: error.stack } : undefined,
-      timestamp: new Date().toISOString(),
-    }),
-  }).catch(() => {});
+): Promise<void> => {
+  try {
+    await fetch(REPORT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type,
+        version: VERSION,
+        config,
+        error: error
+          ? { message: error.message, stack: error.stack }
+          : undefined,
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch(() => {});
+  } catch {}
 };
 
 const FRAMEWORK_NAMES: Record<Framework, string> = {
@@ -193,7 +188,10 @@ export const init = new Command()
     "activation key (e.g., Meta+K, Ctrl+Shift+G, Space)",
   )
   .option("--skip-install", "skip package installation", false)
-  .option("--pkg <pkg>", "custom package URL for CLI (e.g., grab)")
+  .option(
+    "--pkg <pkg>",
+    "custom package URL for CLI (e.g., @react-grab/cli)",
+  )
   .option(
     "-c, --cwd <cwd>",
     "working directory (defaults to current directory)",
@@ -213,10 +211,7 @@ export const init = new Command()
 
       const projectInfo = await detectProject(cwd);
 
-      const removeAgents = async (
-        agentsToRemove: string[],
-        skipInstall: boolean = false,
-      ) => {
+      const removeAgents = async (agentsToRemove: string[], skipInstall: boolean = false) => {
         for (const agentToRemove of agentsToRemove) {
           const removalResult = previewAgentRemoval(
             projectInfo.projectRoot,
@@ -237,22 +232,14 @@ export const init = new Command()
             );
           }
 
-          if (
-            removalResult.success &&
-            !removalResult.noChanges &&
-            removalResult.newContent
-          ) {
+          if (removalResult.success && !removalResult.noChanges && removalResult.newContent) {
             applyTransformWithFeedback(
               removalResult,
               `Removing ${getAgentName(agentToRemove)} from ${removalResult.filePath}.`,
             );
           }
 
-          if (
-            removalPackageJsonResult.success &&
-            !removalPackageJsonResult.noChanges &&
-            removalPackageJsonResult.newContent
-          ) {
+          if (removalPackageJsonResult.success && !removalPackageJsonResult.noChanges && removalPackageJsonResult.newContent) {
             applyPackageJsonWithFeedback(
               removalPackageJsonResult,
               `Removing ${getAgentName(agentToRemove)} from ${removalPackageJsonResult.filePath}.`,
@@ -337,9 +324,7 @@ export const init = new Command()
                 process.exit(1);
               }
 
-              collectedOptions.activationKey = key
-                ? key.toLowerCase()
-                : undefined;
+              collectedOptions.activationKey = key ? key.toLowerCase() : undefined;
 
               logger.log(
                 `  Activation key: ${highlighter.info(formatActivationKeyDisplay(collectedOptions.activationKey))}`,
@@ -508,9 +493,7 @@ export const init = new Command()
             let agentsToRemove: string[] = [];
 
             if (projectInfo.installedAgents.length > 0) {
-              const installedNames = formatInstalledAgentNames(
-                projectInfo.installedAgents,
-              );
+              const installedNames = formatInstalledAgentNames(projectInfo.installedAgents);
 
               const { action } = await prompts({
                 type: "select",
@@ -901,7 +884,7 @@ export const init = new Command()
         await promptSkillInstall(cwd);
       }
 
-      reportToCli("completed", {
+      await reportToCli("completed", {
         framework: finalFramework,
         packageManager: finalPackageManager,
         router: finalNextRouterType,
@@ -910,6 +893,6 @@ export const init = new Command()
       });
     } catch (error) {
       handleError(error);
-      reportToCli("error", undefined, error as Error);
+      await reportToCli("error", undefined, error as Error);
     }
   });

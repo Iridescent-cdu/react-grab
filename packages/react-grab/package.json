@@ -1,6 +1,6 @@
 {
   "name": "react-grab",
-  "version": "0.1.0-beta.11",
+  "version": "0.1.0-beta.5",
   "description": "Select context for coding agents directly from your website",
   "keywords": [
     "react",
@@ -52,6 +52,9 @@
     "./dist/*.cjs": "./dist/*.cjs",
     "./dist/*.mjs": "./dist/*.mjs"
   },
+  "bin": {
+    "react-grab": "./dist/cli.cjs"
+  },
   "main": "dist/index.js",
   "module": "dist/index.js",
   "browser": "dist/index.global.js",
@@ -68,11 +71,11 @@
     "prebuild": "mkdir -p dist && tailwindcss -i ./src/styles.css -o ./dist/styles.css -m",
     "build": "NODE_ENV=production tsup",
     "dev": "concurrently \"pnpm:css:watch\" \"tsup --watch --ignore-watch dist\"",
-    "lint": "eslint src/**/*.{ts,tsx}",
-    "lint:fix": "eslint src/**/*.{ts,tsx} --fix",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write .",
+    "check": "eslint src/**/*.ts && prettier --check .",
     "test": "playwright test",
-    "typecheck": "tsc --noEmit",
     "publint": "publint",
     "prepublishOnly": "pnpm build",
     "test:e2e": "playwright test",

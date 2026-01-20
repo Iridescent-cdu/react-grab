@@ -38,28 +38,6 @@ test.describe("Context Menu", () => {
       expect(isContextMenuVisible).toBe(true);
     });
 
-    test("should show context menu when right-clicking while holding activation keys", async ({
-      reactGrab,
-    }) => {
-      await reactGrab.activate();
-      await reactGrab.hoverElement("li");
-      await reactGrab.waitForSelectionBox();
-
-      await reactGrab.page.keyboard.down("Meta");
-      await reactGrab.page.keyboard.down("c");
-      await reactGrab.page.waitForTimeout(100);
-
-      const element = reactGrab.page.locator("li").first();
-      await element.click({ button: "right", force: true });
-
-      await expect
-        .poll(() => reactGrab.isContextMenuVisible(), { timeout: 2000 })
-        .toBe(true);
-
-      await reactGrab.page.keyboard.up("c");
-      await reactGrab.page.keyboard.up("Meta");
-    });
-
     test("should show context menu with Copy and Open items", async ({
       reactGrab,
     }) => {
@@ -540,7 +518,7 @@ test.describe("Context Menu", () => {
         ).__REACT_GRAB__;
 
         const mockProvider = {
-          *send() {
+          async *send() {
             yield "Processing...";
             yield "Completed";
           },
@@ -574,9 +552,7 @@ test.describe("Context Menu", () => {
 
       const menuInfo = await reactGrab.getContextMenuInfo();
       expect(menuInfo.isVisible).toBe(true);
-      expect(
-        menuInfo.menuItems.map((item: string) => item.toLowerCase()),
-      ).toContain("custom edit");
+      expect(menuInfo.menuItems.map((item: string) => item.toLowerCase())).toContain("custom edit");
     });
 
     test("custom action should trigger enterPromptMode", async ({
@@ -593,7 +569,7 @@ test.describe("Context Menu", () => {
         ).__REACT_GRAB__;
 
         const mockProvider = {
-          *send() {
+          async *send() {
             yield "Processing...";
             yield "Completed";
           },
@@ -654,9 +630,7 @@ test.describe("Context Menu", () => {
               id: "plain-action",
               label: "Plain Action",
               onAction: () => {
-                (
-                  window as { __plainActionCalled?: boolean }
-                ).__plainActionCalled = true;
+                (window as { __plainActionCalled?: boolean }).__plainActionCalled = true;
               },
             },
           ],
@@ -669,18 +643,14 @@ test.describe("Context Menu", () => {
       await reactGrab.rightClickElement("li:first-child");
 
       const menuInfo = await reactGrab.getContextMenuInfo();
-      const lowerMenuItems = menuInfo.menuItems.map((item: string) =>
-        item.toLowerCase(),
-      );
+      const lowerMenuItems = menuInfo.menuItems.map((item: string) => item.toLowerCase());
       expect(lowerMenuItems).toContain("plain action");
 
       await reactGrab.clickContextMenuItem("Plain Action");
       await reactGrab.page.waitForTimeout(100);
 
       const actionCalled = await reactGrab.page.evaluate(
-        () =>
-          (window as { __plainActionCalled?: boolean }).__plainActionCalled ??
-          false,
+        () => (window as { __plainActionCalled?: boolean }).__plainActionCalled ?? false
       );
       expect(actionCalled).toBe(true);
     });
@@ -722,9 +692,7 @@ test.describe("Context Menu", () => {
       await reactGrab.rightClickElement("li:first-child");
 
       const menuInfo = await reactGrab.getContextMenuInfo();
-      const lowerMenuItems = menuInfo.menuItems.map((item: string) =>
-        item.toLowerCase(),
-      );
+      const lowerMenuItems = menuInfo.menuItems.map((item: string) => item.toLowerCase());
       expect(lowerMenuItems).toContain("first action");
       expect(lowerMenuItems).toContain("second action");
     });
@@ -751,9 +719,7 @@ test.describe("Context Menu", () => {
               label: "Keyboard Action",
               shortcut: "K",
               onAction: () => {
-                (
-                  window as { __keyboardActionCalled?: boolean }
-                ).__keyboardActionCalled = true;
+                (window as { __keyboardActionCalled?: boolean }).__keyboardActionCalled = true;
               },
             },
           ],
@@ -772,7 +738,7 @@ test.describe("Context Menu", () => {
       const actionCalled = await reactGrab.page.evaluate(
         () =>
           (window as { __keyboardActionCalled?: boolean })
-            .__keyboardActionCalled ?? false,
+            .__keyboardActionCalled ?? false
       );
       expect(actionCalled).toBe(true);
     });
@@ -814,9 +780,7 @@ test.describe("Context Menu", () => {
         const shadowRoot = host?.shadowRoot;
         if (!shadowRoot) return false;
         const root = shadowRoot.querySelector(`[${attrName}]`);
-        const button = root?.querySelector(
-          '[data-react-grab-menu-item="disabled action"]',
-        );
+        const button = root?.querySelector('[data-react-grab-menu-item="disabled action"]');
         return button?.hasAttribute("disabled") ?? false;
       }, "data-react-grab");
       expect(isDisabled).toBe(true);
@@ -843,8 +807,7 @@ test.describe("Context Menu", () => {
               id: "context-action",
               label: "Context Action",
               enabled: (context: { element: Element }) => {
-                (window as { __enabledTagName?: string }).__enabledTagName =
-                  context.element.tagName;
+                (window as { __enabledTagName?: string }).__enabledTagName = context.element.tagName;
                 return context.element.tagName.toLowerCase() === "li";
               },
               onAction: () => {},
@@ -859,14 +822,12 @@ test.describe("Context Menu", () => {
       await reactGrab.rightClickElement("li:first-child");
 
       const enabledTagName = await reactGrab.page.evaluate(
-        () => (window as { __enabledTagName?: string }).__enabledTagName,
+        () => (window as { __enabledTagName?: string }).__enabledTagName
       );
       expect(enabledTagName).toBe("LI");
 
       const menuInfo = await reactGrab.getContextMenuInfo();
-      const lowerMenuItems = menuInfo.menuItems.map((item: string) =>
-        item.toLowerCase(),
-      );
+      const lowerMenuItems = menuInfo.menuItems.map((item: string) => item.toLowerCase());
       expect(lowerMenuItems).toContain("context action");
     });
   });

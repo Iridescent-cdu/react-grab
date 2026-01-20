@@ -505,9 +505,7 @@ export const createAgentManager = (
 
     void effectiveAgent?.provider?.redo?.();
 
-    let validElements = elements.filter((element) =>
-      document.contains(element),
-    );
+    let validElements = elements.filter((element) => document.contains(element));
 
     if (validElements.length === 0) {
       const reacquiredElement = tryReacquireElement(session);
@@ -519,9 +517,7 @@ export const createAgentManager = (
     if (validElements.length > 0 && effectiveAgent) {
       completedSessionsStack.push(undoneSessionData);
 
-      const newBounds = validElements.map((element) =>
-        createElementBounds(element),
-      );
+      const newBounds = validElements.map((element) => createElementBounds(element));
       const restoredSession: AgentSession = {
         ...session,
         selectionBounds: newBounds,
