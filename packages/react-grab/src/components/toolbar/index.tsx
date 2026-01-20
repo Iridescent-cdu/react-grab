@@ -1,5 +1,6 @@
-import { createSignal, onMount, onCleanup, Show } from "solid-js";
+import { createSignal, onMount, onCleanup, Show, For } from "solid-js";
 import type { Component } from "solid-js";
+import type { ToolbarAction } from "../../types.js";
 import { cn } from "../../utils/cn.js";
 import { loadToolbarState, saveToolbarState, type SnapEdge } from "./state.js";
 import { IconSelect } from "../icons/icon-select.jsx";
@@ -20,6 +21,7 @@ interface ToolbarProps {
   onToggle?: () => void;
   enabled?: boolean;
   onToggleEnabled?: () => void;
+  toolbarActions?: ToolbarAction[];
 }
 
 export const Toolbar: Component<ToolbarProps> = (props) => {
@@ -555,6 +557,31 @@ export const Toolbar: Component<ToolbarProps> = (props) => {
               </div>
             </button>
           </div>
+          <Show when={props.toolbarActions && props.toolbarActions.length > 0}>
+            <div
+              class={cn(
+                "flex items-center gap-1 transition-all duration-100 ease-out overflow-hidden",
+                isCollapsed() ? "max-w-0 opacity-0" : "max-w-[200px] opacity-100",
+              )}
+            >
+              <For each={props.toolbarActions}>
+                {(action) => (
+                  <button
+                    data-react-grab-ignore-events
+                    class="contain-layout shrink-0 flex items-center justify-center px-2 py-1 rounded-sm bg-[#f5f5f5] hover:bg-[#e5e5e5] transition-colors cursor-pointer text-[11px] leading-3 font-medium text-black whitespace-nowrap"
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      event.stopImmediatePropagation();
+                      action.onClick();
+                    }}
+                  >
+                    {action.label}
+                  </button>
+                )}
+              </For>
+            </div>
+          </Show>
           <button
             data-react-grab-ignore-events
             data-react-grab-toolbar-collapse
