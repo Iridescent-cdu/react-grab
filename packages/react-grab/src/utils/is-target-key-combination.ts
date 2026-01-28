@@ -10,14 +10,17 @@ export const isTargetKeyCombination = (
   event: KeyboardEvent,
   options: HotkeyOptions,
 ): boolean => {
-  if (options.activationKey) {
-    const matcher = parseActivationKey(options.activationKey);
-    return matcher(event);
-  }
+  // 快捷键激活功能已禁用
+  return false;
 
-  const hasOnlyMetaOrCtrl =
-    (event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey;
-  return Boolean(
-    event.key && hasOnlyMetaOrCtrl && isCLikeKey(event.key, event.code),
-  );
+  // 原始逻辑（已禁用）：
+  // if (options.activationKey) {
+  //   const matcher = parseActivationKey(options.activationKey);
+  //   return matcher(event);
+  // }
+  // const hasOnlyMetaOrCtrl =
+  //   (event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey;
+  // return Boolean(
+  //   event.key && hasOnlyMetaOrCtrl && isCLikeKey(event.key, event.code),
+  // );
 };
